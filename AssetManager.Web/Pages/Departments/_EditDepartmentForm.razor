@@ -1,0 +1,52 @@
+﻿@using AssetManager.Core.Entities.Staff
+@using AssetManager.Core.Services.Staffs
+
+@inject IDepartmentService departmentService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudGrid>
+                <MudItem xs="12" sm="4">
+                    <MudTextField T="string" Label="Name" Variant="Variant.Filled" @bind-Value="addDepartment.Name" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@(() => Save())">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public int? departmentId { get; set; }
+
+    private Department addDepartment = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if(departmentId != null) {
+            addDepartment = await departmentService.GetByIdAsync(departmentId.Value);
+        }
+    }
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    void Cancel() => MudDialog.Cancel();
+
+    MudForm form;
+
+    private async void Save()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            var department = await departmentService.UpdateAsync(addDepartment);
+            Snackbar.Add("Department updated successfully!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(department));
+        }
+    }
+}

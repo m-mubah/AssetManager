@@ -1,0 +1,103 @@
+﻿@page "/inventory/approvals"
+@attribute [Authorize(Roles = InfrastructureConstants.Identity.Roles.Administrator)]
+
+@using AssetManager.Infrastructure;
+@using AssetManager.Core
+@using AssetManager.Core.Entities.Asset.Approval
+@using AssetManager.Core.Services.Assets
+
+@inject IAssetApprovalService assetApprovalService
+@inject IDialogService Dialog
+@inject ISnackbar Snackbar
+
+<MudContainer Class="mt-4">
+    <MudToolBar>
+        <MudText Typo="@Typo.h4">Approvals</MudText>
+        <MudSpacer />
+    </MudToolBar>
+
+    <MudTable class="mt-5 ml-5 mb-5 mr-5" Elevation="5" Items="@approvals" Hover="true">
+
+        <ToolBarContent>
+            <MudToolBarSpacer />
+            
+            <MudSelect T="int?" Label="Filter" Strict="true" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" ValueChanged="status => Filter(status)">
+                <MudSelectItem T="int?" Value="null">All</MudSelectItem>
+                <MudSelectItem T="int?" Value="ModelConstants.ApprovalStatuses.Pending">Pending</MudSelectItem>
+                <MudSelectItem T="int?" Value="ModelConstants.ApprovalStatuses.Approved">Approved</MudSelectItem>
+                <MudSelectItem T="int?" Value="ModelConstants.ApprovalStatuses.Rejected">Rejected</MudSelectItem>
+            </MudSelect>
+        </ToolBarContent>
+
+        <HeaderContent>
+            <MudTh>Asset Number</MudTh>
+            <MudTh>Asset</MudTh>
+            <MudTh>Requested By</MudTh>
+            <MudTh>Requested Date</MudTh>
+            <MudTh>Updated By</MudTh>
+            <MudTh>Updated Date</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="Asset Number">@context.Asset.Reference</MudTd>
+            <MudTd DataLabel="Asset">@context.Asset.Name</MudTd>
+            <MudTd DataLabel="Requested By">@context.RequestedByStaff.FullName</MudTd>
+            <MudTd DataLabel="Requested Date">@context.RequestedDate.ToShortDateString()</MudTd>
+            <MudTd DataLabel="Updated By">@context.UpdatedByStaff?.FullName</MudTd>
+            <MudTd DataLabel="Update Date">@context.UpdatedDate?.ToShortDateString()</MudTd>
+            <MudTd DataLabel="Status">@context.Status.Name</MudTd>
+            <MudTd>
+                <MudBlazor.MudIcon Icon="@Icons.Filled.RemoveRedEye" class="action-btn" @onclick="() => OpenViewAssetApprovalDialog(context.Id)" />
+            </MudTd>
+        </RowTemplate>
+
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+
+    </MudTable>
+
+</MudContainer>
+
+@code {
+    private IList<AssetApproval> approvals = new List<AssetApproval>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        approvals = await assetApprovalService.GetAll();
+    }
+
+    private async void OpenViewAssetApprovalDialog(Guid id)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("approvalId", id);
+
+        var assetApprovalDialog = Dialog.Show<_ViewApproval>("Asset Approval", parameters, new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var result = await assetApprovalDialog.Result;
+
+        if (!result.Cancelled)
+        {
+            approvals.Clear();
+            approvals = await assetApprovalService.GetAll();
+        }
+        this.StateHasChanged();
+    }
+
+    private async void Filter(int? status)
+    {
+        if (status == null)
+        {
+            approvals.Clear();
+            approvals = await assetApprovalService.GetAll();
+        }
+        else
+        {
+            approvals.Clear();
+            approvals = await assetApprovalService.GetAll(status);
+        }
+
+        this.StateHasChanged();
+    }
+}

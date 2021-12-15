@@ -1,0 +1,108 @@
+﻿@page "/job-titles"
+@attribute [Authorize(Roles = InfrastructureConstants.Identity.Roles.Administrator)]
+
+@using AssetManager.Infrastructure;
+@using AssetManager.Core.Entities.Staff
+@using AssetManager.Core.Services.Staffs
+
+@inject IJobTitleService jobTitleService
+@inject IDialogService dialog
+@inject ISnackbar Snackbar
+
+
+<MudContainer Class="mt-4">
+    <MudToolBar>
+        <MudText Typo="@Typo.h4">Job Titles</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled"
+                   Size="Size.Large"
+                   StartIcon="@Icons.Material.Outlined.Add"
+                   IconColor="Color.Success"
+                   OnClick="@OpenNewDepartmentDialog">
+            New Job Title
+        </MudButton>
+    </MudToolBar>
+
+    <MudTable class="mt-5 ml-5 mb-5 mr-5" Elevation="5" Items="@jobTitles" Hover="true">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd>
+                <MudBlazor.MudIcon Icon="@Icons.Filled.Edit" class="action-btn" @onclick="() => OpenEditJobTitleDialog(context.Id)" />
+                <MudBlazor.MudIcon Icon="@Icons.Filled.Delete" class="action-btn" @onclick="() => Delete(context.Id)" />
+            </MudTd>
+        </RowTemplate>
+
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+
+    </MudTable>
+
+</MudContainer>
+
+@code {
+    private IList<JobTitle> jobTitles = new List<JobTitle>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        jobTitles = await jobTitleService.GetJobTitlesAsync();
+    }
+
+    private async void OpenNewDepartmentDialog()
+    {
+        var newJobTitleDialog = dialog.Show<_NewJobTitleForm>("New Job Title", new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var result = await newJobTitleDialog.Result;
+
+        if (!result.Cancelled)
+        {
+            jobTitles.Clear();
+            jobTitles = await jobTitleService.GetJobTitlesAsync();
+        }
+        this.StateHasChanged();
+    }
+
+    private async void OpenEditJobTitleDialog(int id)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("jobTitleId", id);
+
+        var editJobTitleDialog = dialog.Show<_EditJobTitleForm>("Edit Department", parameters, new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var result = await editJobTitleDialog.Result;
+
+        if (!result.Cancelled)
+        {
+            jobTitles.Clear();
+            jobTitles = await jobTitleService.GetJobTitlesAsync();
+        }
+        this.StateHasChanged();
+    }
+
+    private async void Delete(int jobTitleId)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", "Do you really want to delete this job title? This process cannot be undone."+
+            "WARNING: THIS WILL DELETE ALL STAFF WITH THIS JOB TITLE!");
+        parameters.Add("ButtonText", "Delete");
+        parameters.Add("Color", Color.Error);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var deleteDialog = dialog.Show<Dialog>("Delete", parameters, options);
+
+        var result = await deleteDialog.Result;
+
+        if (!result.Cancelled)
+        {
+            Snackbar.Add("Job title deleted successfully!", Severity.Warning);
+            await jobTitleService.DeleteAsync(jobTitleId);
+            jobTitles.Clear();
+            jobTitles = await jobTitleService.GetJobTitlesAsync();
+        }
+        this.StateHasChanged();
+    }
+}

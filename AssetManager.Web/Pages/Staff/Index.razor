@@ -1,0 +1,125 @@
+﻿@page "/staff"
+@attribute [Authorize(Roles = InfrastructureConstants.Identity.Roles.Administrator)]
+
+@using AssetManager.Infrastructure;
+@using AssetManager.Core.DTO.Staff
+@using AssetManager.Core.Services.Staffs
+
+@inject IStaffService staffService
+@inject IDialogService dialog
+@inject ISnackbar Snackbar
+
+
+<MudContainer Class="mt-4">
+    <MudToolBar>
+        <MudText Typo="@Typo.h4">Staff</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled"
+                   Size="Size.Large"
+                   StartIcon="@Icons.Material.Outlined.Add"
+                   IconColor="Color.Success"
+                   OnClick="@OpenNewStaffDialog">
+            New Staff
+        </MudButton>
+    </MudToolBar>
+
+    <MudTable class="mt-5 ml-5 mb-5 mr-5" Elevation="5" Items="@staff" Hover="true">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Staff Number</MudTh>
+            <MudTh>NID</MudTh>
+            <MudTh>Department</MudTh>
+            <MudTh>Job Title</MudTh>
+            <MudTh>Department Head</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.FullName</MudTd>
+            <MudTd DataLabel="Department Head">@context.StaffNumber</MudTd>
+            <MudTd DataLabel="NID">@context.NID</MudTd>
+            <MudTd DataLabel="Department">@context.Department</MudTd>
+            <MudTd DataLabel="Job Title">@context.JobTitle</MudTd>
+            @if (context.IsDepartmentHead)
+            {
+                <MudTd DataLabel="Department Head"><MudIcon Icon="@Icons.Material.Filled.Check" Title="Is Department Head" /></MudTd>
+
+            }
+            else
+            {
+                <MudTd DataLabel="Department Head"><MudIcon Icon="@Icons.Material.Filled.Close" Title="Is Not Department Head" /></MudTd>
+            }
+            <MudTd>
+                <MudBlazor.MudIcon Icon="@Icons.Filled.Edit" class="action-btn" @onclick="() => OpenEditStaffDialog(context.Id)" />
+                <MudBlazor.MudIcon Icon="@Icons.Filled.Delete" class="action-btn" @onclick="() => Delete(context.Id)" />
+            </MudTd>
+        </RowTemplate>
+
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+
+    </MudTable>
+
+</MudContainer>
+
+@code {
+    private IList<GetStaffDTO> staff = new List<GetStaffDTO>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        staff = await staffService.GetStaffAsync();
+    }
+
+    private async void OpenNewStaffDialog()
+    {
+        var newStaffDialog = dialog.Show<_NewStaffForm>("New Staff", new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var result = await newStaffDialog.Result;
+
+        if (!result.Cancelled)
+        {
+            staff.Clear();
+            staff = await staffService.GetStaffAsync();
+        }
+        this.StateHasChanged();
+    }
+
+    private async void OpenEditStaffDialog(Guid id)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("staffId", id);
+
+        var editStaffDialog = dialog.Show<_EditStaffForm>("Edit Staff", parameters, new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var result = await editStaffDialog.Result;
+
+        if (!result.Cancelled)
+        {
+            staff.Clear();
+            staff = await staffService.GetStaffAsync();
+        }
+        this.StateHasChanged();
+    }
+
+    private async void Delete(Guid staffId)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", "Do you really want to delete this staff? This process cannot be undone.");
+        parameters.Add("ButtonText", "Delete");
+        parameters.Add("Color", Color.Error);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var deleteDialog = dialog.Show<Dialog>("Delete", parameters, options);
+
+        var result = await deleteDialog.Result;
+
+        if (!result.Cancelled)
+        {
+            Snackbar.Add("Staff deleted successfully!", Severity.Warning);
+            await staffService.DeleteAsync(staffId);
+            staff.Clear();
+            staff = await staffService.GetStaffAsync();
+        }
+        this.StateHasChanged();
+    }
+}

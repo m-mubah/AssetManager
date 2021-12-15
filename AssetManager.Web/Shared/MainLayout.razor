@@ -1,0 +1,42 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="_currentTheme" />
+<MudDialogProvider FullWidth="true" MaxWidth="MaxWidth.ExtraSmall" />
+<MudSnackbarProvider />
+
+<MudSwipeArea>
+    <MudLayout>
+        <MudAppBar Elevation="25">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+            <MudText Typo="Typo.h5" Class="mudblazor-appbar-brand-text d-none d-md-flex">Asset Manager</MudText>
+            <MudSpacer />
+            @* <MudAutocomplete AutoFocus="true" @ref="_searchAutocomplete" T="ApiLinkServiceEntry" Placeholder="Search" SearchFunc="Search" Variant="Variant.Outlined" ValueChanged="OnSearchResult" Class="docs-search-bar" AdornmentIcon="@Icons.Material.Filled.Search"> *@
+            @*     <ItemTemplate Context="result"> *@
+            @*         <MudText>@result.Title</MudText> <MudText Typo="Typo.body2">@result.SubTitle</MudText> *@
+            @*     </ItemTemplate> *@
+            @* </MudAutocomplete> *@
+            <MudSpacer />
+            @*<LoginDisplay></LoginDisplay>*@
+            <div class="d-none d-md-flex align-center">
+                <MudMenu EndIcon="@Icons.Filled.KeyboardArrowDown" Label="@_username" Color="Color.Inherit" Dense="true" Direction="Direction.Right" OffsetY="true">
+                    <MudText Typo="Typo.body2" Class="px-4 py-2">
+                        <form method="post" action="Identity/Account/LogOut"><button type="submit" class="nav-link btn btn-link">Log out</button></form>
+                    </MudText>
+                </MudMenu>
+            </div>
+        </MudAppBar>
+
+        <MudDrawer @bind-Open=_drawerOpen Elevation="25" Breakpoint="Breakpoint.Lg" Class="mudblazor-appbar-band">
+            <MudDrawerHeader Class="mudblazor-brand" LinkToIndex="true">
+                @* <MudBlazorLogo/> *@
+            </MudDrawerHeader>
+            <NavMenu @ref="@_navMenuRef" />
+        </MudDrawer>
+        <MudMainContent>
+            @Body
+        </MudMainContent>
+        <MudScrollToTop TopOffset="400" Style="z-index:2000;">
+            <MudFab Icon="@Icons.Material.Filled.KeyboardArrowUp" Color="Color.Primary" />
+        </MudScrollToTop>
+    </MudLayout>
+</MudSwipeArea>

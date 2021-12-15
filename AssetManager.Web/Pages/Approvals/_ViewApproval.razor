@@ -1,0 +1,217 @@
+﻿@using AssetManager.Core.Entities.Asset.Approval
+@using AssetManager.Core.Entities.Asset
+@using AssetManager.Core.Entities.Staff
+@using AssetManager.Core.Services.Assets
+@using AssetManager.Core.Services.Staffs
+@using AssetManager.Core.DTO.Asset
+@using AssetManager.Core
+
+@inject IAssetApprovalService assetApprovalService
+@inject IAssetService assetService
+@inject IStaffService staffService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudGrid>
+                <MudItem xs="6">
+                    <h4>Current</h4>
+
+                    <MudGrid>
+                        <MudItem xs="12">
+                            <MudTextField T="string" Label="Name" Variant="Variant.Filled" @bind-Value="editAssetDTO.Asset.Name" ReadOnly />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField T="string" Label="Reference" Variant="Variant.Filled" @bind-Value="editAssetDTO.Asset.Reference" ReadOnly />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudSelect T="int" Label="Type" Variant="Variant.Filled" @bind-Value="@editAssetDTO.Asset.TypeId" ReadOnly>
+                                @foreach (var type in assetTypes)
+                                {
+                                    <MudSelectItem T="int" Value="@type.Id">@type.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudDatePicker Label="Purchased Date" Variant="Variant.Filled" @bind-Date="editAssetDTO.Asset.PurchasedDate" ReadOnly />
+                        </MudItem>
+                    </MudGrid>
+
+
+
+                    @if (editAssetDTO.Discarded)
+                    {
+                        <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+                        <MudGrid>
+                            <MudItem xs="12">
+                                <MudDatePicker Label="Discarded Date" Variant="Variant.Filled" @bind-Date="editAssetDTO.Asset.DiscardedDate" ReadOnly />
+                            </MudItem>
+                        </MudGrid>
+                    }
+
+                    @if (editAssetDTO.AssignedToStaff)
+                    {
+                        <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+                        <MudGrid>
+                            <MudItem xs=12>
+                                <h4>Assigned Staff</h4>
+                            </MudItem>
+
+
+                            <MudItem xs="12">
+                                <MudSelect T="Staff" Label="Staff" Variant="Variant.Filled" @bind-Value="@editAssetDTO.AssetHistory.AssignedStaff" ReadOnly>
+                                    @foreach (var staff in staffs)
+                                    {
+                                        <MudSelectItem T="Staff" Value="@staff">@staff.FullName</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <MudDatePicker Label="Assigned Date" Variant="Variant.Filled" @bind-Date="editAssetDTO.Asset.LastAssginedDate" ReadOnly />
+                            </MudItem>
+                        </MudGrid>
+                    }
+                </MudItem>
+                <MudItem xs="6">
+                    <h4>Incoming</h4>
+
+                    <MudGrid>
+                        <MudItem xs="12">
+                            <MudTextField T="string" Label="Name" Variant="Variant.Filled" @bind-Value="assetApproval.ApprovalChange.Name" ReadOnly />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField T="string" Label="Reference" Variant="Variant.Filled" @bind-Value="assetApproval.ApprovalChange.ReferenceNumber" ReadOnly />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudDatePicker Label="Purchased Date" Variant="Variant.Filled" @bind-Date="assetApproval.ApprovalChange.PurchasedDate" ReadOnly />
+                        </MudItem>
+                    </MudGrid>
+
+
+
+                    @if (assetApproval.Discarded)
+                    {
+                        <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+                        <MudGrid>
+                            <MudItem xs="12">
+                                <MudDatePicker Label="Discarded Date" Variant="Variant.Filled" @bind-Date="assetApproval.ApprovalChange.DiscardedDate" ReadOnly />
+                            </MudItem>
+                        </MudGrid>
+                    }
+
+                    @if (assetApproval.AssignedToStaff)
+                    {
+                        <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+                        <MudGrid>
+                            <MudItem xs=12>
+                                <h4>Assigned Staff</h4>
+                            </MudItem>
+
+
+                            <MudItem xs="12">
+                                <MudSelect T="Guid?" Label="Staff" Variant="Variant.Filled" @bind-Value="@assetApproval.ApprovalChange.AssignedStaffId" ReadOnly>
+                                    @foreach (var staff in staffs)
+                                    {
+                                        <MudSelectItem T="Guid?" Value="@staff.Id">@staff.FullName</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <MudDatePicker Label="Assigned Date" Variant="Variant.Filled" @bind-Date="assetApproval.ApprovalChange.LastAssignedDate" ReadOnly />
+                            </MudItem>
+                        </MudGrid>
+                    }
+
+                    <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+                    <MudGrid>
+                        <MudItem xs=12>
+                            <MudTextField T="string" Label="Remarks" Variant="Variant.Filled" @bind-Value="assetApproval.AssetApproval.Remarks" ReadOnly />
+                        </MudItem>
+                    </MudGrid>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        @if(assetApproval.AssetApproval.StatusId == ModelConstants.ApprovalStatuses.Pending)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="@(() => Reject())">Reject</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => Approve())">Approve</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public Guid approvalId { get; set; }
+
+    private ViewAssetApprovalDTO assetApproval = new();
+    private EditAssetDTO editAssetDTO = new();
+    private IList<AssetType> assetTypes = new List<AssetType>();
+    private IList<Staff> staffs = new List<Staff>();
+
+    private bool discarded = false;
+    private bool assignedToStaff = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        assetApproval = await assetApprovalService.Get(approvalId);
+
+        editAssetDTO = await assetService.GetAssetAsync(assetApproval.AssetApproval.AssetId);
+
+        assetTypes = await assetService.GetAllTypes();
+        staffs = await staffService.GetAll();
+
+        if (editAssetDTO.AssetHistory == null)
+        {
+            editAssetDTO.AssetHistory = new();
+        }
+    }
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    void Cancel() => MudDialog.Cancel();
+
+    MudForm form;
+
+    private async void Reject()
+    {
+        var rejected = await assetApprovalService.Reject(this.assetApproval.AssetApproval.Id);
+
+        if (rejected != null)
+        {
+            Snackbar.Add("Changes Rejected!", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("An error occured!", Severity.Error);
+        }
+
+        MudDialog.Close(DialogResult.Ok(rejected));
+
+    }
+
+    private async void Approve()
+    {
+        var approved = await assetApprovalService.Approve(this.assetApproval.AssetApproval.Id);
+
+        if (approved != null)
+        {
+            Snackbar.Add("Changes Approved!", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("An error occured!", Severity.Error);
+        }
+
+        MudDialog.Close(DialogResult.Ok(approved));
+    }
+}

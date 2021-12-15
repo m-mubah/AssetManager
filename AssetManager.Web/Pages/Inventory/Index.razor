@@ -1,0 +1,122 @@
+﻿@page "/inventory/assets"
+@attribute [Authorize]
+
+@using AssetManager.Core
+@using AssetManager.Core.DTO.Asset
+@using AssetManager.Core.Entities.Asset
+@using AssetManager.Core.Services.Assets
+
+@inject IAssetService assetService
+@inject IDialogService Dialog
+@inject ISnackbar Snackbar
+
+<MudContainer Class="mt-4">
+    <MudToolBar>
+        <MudText Typo="@Typo.h4">Assets</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled"
+                   Size="Size.Large"
+                   StartIcon="@Icons.Material.Outlined.Add"
+                   IconColor="Color.Success"
+                   OnClick="@OpenNewAssetDialog">
+            New Asset
+        </MudButton>
+    </MudToolBar>
+
+    <MudTable class="mt-5 ml-5 mb-5 mr-5" Elevation="5" Items="@assets" Hover="true" Filter="new Func<ViewAssetDTO,bool>(FilterFunc)">
+        <ToolBarContent>
+             <MudToolBarSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Enter reference number and press enter to search" Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Filled.Search" IconSize="Size.Medium" Class="mt-0 mr-5"></MudTextField>
+        </ToolBarContent>
+
+        <HeaderContent>
+            <MudTh>Asset Number</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Type</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Purchased Date</MudTh>
+            <MudTh>Last Assigned Date</MudTh>
+            <MudTh>Last Assigned Staff</MudTh>
+            <MudTh>Discarded Date</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="Asset Number">@context.Asset.Reference</MudTd>
+            <MudTd DataLabel="Asset Number">@context.Asset.Name</MudTd>
+            <MudTd DataLabel="Type">@context.Asset.Type.Name</MudTd>
+            <MudTd DataLabel="Status">@context.Asset.Status.Name</MudTd>
+            <MudTd DataLabel="Purchased Date">@context.Asset.PurchasedDate?.ToShortDateString()</MudTd>
+            <MudTd DataLabel="Last Assigned Date">@context.Asset.LastAssginedDate?.ToShortDateString()</MudTd>
+            <MudTd DataLabel="Last Assigned Staff">@context.AssetHistory?.AssignedStaff.FullName</MudTd>
+            <MudTd DataLabel="Discarded Date">@context.Asset.DiscardedDate</MudTd>
+            <MudTd>
+                @if (context.Asset.StatusId != ModelConstants.AssetStatuses.ApprovalPending && context.Asset.StatusId != ModelConstants.AssetStatuses.Discarded)
+                {
+                    <MudBlazor.MudIcon Icon="@Icons.Filled.Edit" class="action-btn" @onclick="() => OpenEditAssetDialog(context.Asset.Id)" />
+                }
+
+                @if (context.Asset.StatusId == ModelConstants.AssetStatuses.Discarded)
+                {
+
+                    <MudBlazor.MudIcon Icon="@Icons.Filled.Delete" class="action-btn" />
+                }
+            </MudTd>
+        </RowTemplate>
+
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+
+    </MudTable>
+
+</MudContainer>
+
+@code {
+    private IList<ViewAssetDTO> assets = new List<ViewAssetDTO>();
+    private string searchString = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        assets = await assetService.GetAssetsAsync();
+    }
+
+    private async void OpenNewAssetDialog()
+    {
+        var newAssetDialog = Dialog.Show<_NewAssetForm>("New Asset", new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var result = await newAssetDialog.Result;
+
+        if (!result.Cancelled)
+        {
+            assets.Clear();
+            assets = await assetService.GetAssetsAsync();
+        }
+        this.StateHasChanged();
+    }
+
+    private async void OpenEditAssetDialog(Guid id)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("assetId", id);
+
+        var editJobTitleDialog = Dialog.Show<_EditAssetForm>("Edit Asset", parameters, new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var result = await editJobTitleDialog.Result;
+
+        if (!result.Cancelled)
+        {
+            assets.Clear();
+            assets = await assetService.GetAssetsAsync();
+        }
+        this.StateHasChanged();
+    }
+
+    private bool FilterFunc(ViewAssetDTO viewAssetDTO)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (viewAssetDTO.Asset.Reference.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+}

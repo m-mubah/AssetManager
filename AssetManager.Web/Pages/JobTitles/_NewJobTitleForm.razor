@@ -1,0 +1,42 @@
+﻿@using AssetManager.Core.Entities.Staff
+@using AssetManager.Core.Services.Staffs
+
+@inject IJobTitleService jobTitleService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form">
+            <MudGrid>
+                <MudItem xs="12" sm="4">
+                    <MudTextField T="string" Label="Name" Variant="Variant.Filled" @bind-Value="jobTitle.Name" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@(() => Save())">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private JobTitle jobTitle = new() ;
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    void Cancel() => MudDialog.Cancel();
+
+    MudForm form;
+
+    private async void Save()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            var department = await jobTitleService.AddAsync(jobTitle);
+            Snackbar.Add("Job title added successfully!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(department));
+        }
+    }
+}

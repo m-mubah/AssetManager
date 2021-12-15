@@ -1,0 +1,73 @@
+﻿@using AssetManager.Core.Entities.Asset
+@using AssetManager.Core.DTO
+@using AssetManager.Core.Services.Assets
+
+@inject IAssetService assetService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref=form Model="addAssetDTO">
+            <MudGrid>
+                <MudItem xs="6">
+                    <MudTextField T="string" Label="Name" Variant="Variant.Filled" @bind-Value="addAssetDTO.Name" />
+                </MudItem>
+
+                <MudItem xs="6">
+                    <MudTextField T="string" Label="Reference" Variant="Variant.Filled" @bind-Value="addAssetDTO.Reference" ReadOnly />
+                </MudItem>
+
+                <MudItem xs="6">
+                    <MudSelect T="int" Label="Type" Variant="Variant.Filled" @bind-Value="@addAssetDTO.AssetTypeId">
+                        @foreach (var type in assetTypes)
+                        {
+                            <MudSelectItem T="int" Value="@type.Id">@type.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="6">
+                    <MudDatePicker Label="Purchased Date" Variant="Variant.Filled" @bind-Date="addAssetDTO.PurchasedDate" />
+                </MudItem>
+            </MudGrid>
+
+            <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@(() => Save())">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private AddAssetDTO addAssetDTO;
+
+    private IList<AssetType> assetTypes = new List<AssetType>();
+
+    MudForm form;
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    void Cancel() => MudDialog.Cancel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        addAssetDTO = new();
+        addAssetDTO.Reference = await assetService.GenerateAssetNumberAsync();
+
+        assetTypes = await assetService.GetAllTypes();
+    }
+
+    private async void Save()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            var savedAsset = await assetService.AddAssetAsync(this.addAssetDTO);
+            Snackbar.Add("Asset saved successfully!", Severity.Success);
+            
+            MudDialog.Close(DialogResult.Ok(savedAsset));
+        }
+    }
+}

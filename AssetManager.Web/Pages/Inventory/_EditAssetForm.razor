@@ -1,0 +1,138 @@
+﻿@using AssetManager.Core.Entities.Asset
+@using AssetManager.Core.Entities.Staff
+@using AssetManager.Core.DTO.Asset
+@using AssetManager.Core.Services.Assets
+@using AssetManager.Core.Services.Staffs
+
+@inject IAssetService assetService
+@inject IStaffService staffService
+@inject IAssetApprovalService assetApprovalService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref=form Model="editAssetDTO">
+            <MudGrid>
+                <MudItem xs="6">
+                    <MudTextField T="string" Label="Name" Variant="Variant.Filled" @bind-Value="editAssetDTO.Asset.Name" />
+                </MudItem>
+
+                <MudItem xs="6">
+                    <MudTextField T="string" Label="Reference" Variant="Variant.Filled" @bind-Value="editAssetDTO.Asset.Reference" />
+                </MudItem>
+
+                <MudItem xs="6">
+                    <MudSelect T="int" Label="Type" Variant="Variant.Filled" @bind-Value="@editAssetDTO.Asset.TypeId" ReadOnly>
+                        @foreach (var type in assetTypes)
+                        {
+                            <MudSelectItem T="int" Value="@type.Id">@type.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="6">
+                    <MudDatePicker Label="Purchased Date" Variant="Variant.Filled" @bind-Date="editAssetDTO.Asset.PurchasedDate" />
+                </MudItem>
+            </MudGrid>
+
+            <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+            <MudGrid>
+                <MudItem xs=12>
+                    <div>
+                        <MudCheckBox @bind-Checked="@editAssetDTO.AssignedToStaff" Label="Assign to Staff"></MudCheckBox>
+                    </div>
+                </MudItem>
+
+                @if (editAssetDTO.AssignedToStaff)
+                {
+                    <MudItem xs="6">
+                        <MudSelect T="Staff" Label="Staff" Variant="Variant.Filled" @bind-Value="@editAssetDTO.AssetHistory.AssignedStaff">
+                            @foreach (var staff in staffs)
+                            {
+                                <MudSelectItem T="Staff" Value="@staff">@staff.FullName</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="6">
+                        <MudDatePicker Label="Assigned Date" Variant="Variant.Filled" @bind-Date="editAssetDTO.Asset.LastAssginedDate" />
+                    </MudItem>
+                }
+            </MudGrid>
+
+            <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+            <MudGrid>
+                <MudItem xs=12>
+                    <div>
+                        <MudCheckBox @bind-Checked="@editAssetDTO.Discarded" Label="Discard"></MudCheckBox>
+                    </div>
+                </MudItem>
+
+                @if (editAssetDTO.Discarded)
+                {
+                    <MudItem xs="6">
+                        <MudDatePicker Label="Discarded Date" Variant="Variant.Filled" @bind-Date="editAssetDTO.Asset.DiscardedDate" />
+                    </MudItem>
+                }
+            </MudGrid>
+            <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+            <MudGrid>
+                <MudItem xs=12>
+                    <MudTextField T="string" Label="Remarks" Variant="Variant.Filled" @bind-Value="editAssetDTO.Remarks" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@(() => Save())">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public Guid assetId { get; set; }
+
+    private EditAssetDTO editAssetDTO = new();
+
+    private IList<AssetType> assetTypes = new List<AssetType>();
+    private IList<Staff> staffs = new List<Staff>();
+
+    MudForm form;
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    void Cancel() => MudDialog.Cancel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        editAssetDTO = await assetService.GetAssetAsync(assetId);
+
+        assetTypes = await assetService.GetAllTypes();
+        staffs = await staffService.GetAll();
+
+        if (editAssetDTO.AssetHistory == null)
+        {
+            editAssetDTO.AssetHistory = new();
+
+        }
+    }
+
+    private async void Save()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            var assetApproval = await assetApprovalService.SendUpdatesForApproval(this.editAssetDTO);
+
+            if (assetApproval != null)
+            {
+                Snackbar.Add("Asset saved successfully!", Severity.Success);
+            } else {
+                Snackbar.Add("An error occured!", Severity.Error);
+            }
+
+            MudDialog.Close(DialogResult.Ok(assetApproval));
+        }
+    }
+}

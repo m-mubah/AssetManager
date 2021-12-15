@@ -1,0 +1,90 @@
+@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Asset Manager";
+    Layout = null;
+}
+
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.AspNetCore.Mvc.ViewEngines
+@inject IWebHostEnvironment Environment
+@inject ICompositeViewEngine Engine
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Asset Manager</title>
+    <link href="https://fonts.googleapis.com/css?family=Karla:400,700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.materialdesignicons.com/4.8.95/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="~/Identity/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body style="background-color: #282828">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6 login-section-wrapper">
+
+                <div>
+                    <div class="row mr-4">
+                        <div class="row">
+                            <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                                 width="90" height="90"
+                                 viewBox="0 0 172 172"
+                                 style=" fill:#000000;">
+                                <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><path d="M0,172v-172h172v172z" fill="none"></path><g fill="#0065b5"><path d="M85.91042,22.85495c-0.27775,0.00602 -0.55469,0.03222 -0.82864,0.07839h-41.4099c-4.33113,0 -8.32414,2.47147 -10.25729,6.34922l-10.48125,20.9625v18.55495v68.8c0,6.33533 5.13133,11.46667 11.46667,11.46667h103.2c6.33533,0 11.46667,-5.13133 11.46667,-11.46667v-86v-1.35495l-10.49245,-20.9737c-1.9359,-3.86932 -5.92042,-6.33802 -10.2461,-6.33802h-41.44349c-0.32192,-0.05381 -0.64784,-0.08003 -0.97422,-0.07839zM43.68307,34.4h36.58359v17.2h-45.18359zM91.73333,34.4h36.58359l8.6,17.2h-45.18359z"></path></g></g>
+                            </svg>
+                        </div>
+                        <div class="row ml-4 mt-4">
+                            <h1 class="text-white"> Asset Manager</h1>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="login-wrapper">
+                    <h1 class="login-title text-white">Log in</h1>
+
+                    <form id="account" method="post">
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                        <div class="form-group">
+                            <label asp-for="Input.Username"></label>
+                            <input asp-for="Input.Username" class="form-control" />
+                            <span asp-validation-for="Input.Username" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Input.Password"></label>
+                            <input asp-for="Input.Password" class="form-control" />
+                            <span asp-validation-for="Input.Password" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <div class="checkbox">
+                                <label asp-for="Input.RememberMe">
+                                    <input asp-for="Input.RememberMe" />
+                                    @Html.DisplayNameFor(m => m.Input.RememberMe)
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-block login-btn">Login</button>
+                    </form>
+
+                </div>
+            </div>
+            <div class="col-sm-6 px-0 d-none d-sm-block">
+                <img src="~/side-image.svg" alt="login image" class="login-img">
+            </div>
+        </div>
+    </div>
+
+    <script src="~/Identity/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/Identity/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/Identity/js/site.js" asp-append-version="true"></script>
+</body>
+</html>
+
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+}

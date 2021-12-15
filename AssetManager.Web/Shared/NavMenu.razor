@@ -1,0 +1,22 @@
+﻿@using System.Linq
+@using AssetManager.Infrastructure;
+
+<MudNavMenu>
+    @*<MudNavLink Href="/" Icon="@Icons.Filled.Dashboard">Dashboard</MudNavLink>*@
+
+    <MudNavGroup Title="Inventory" Expanded="true" Icon="@Icons.Filled.AllInbox">
+        <MudNavLink Href="/inventory/assets">Assets</MudNavLink>
+        <AuthorizeView Roles="@InfrastructureConstants.Identity.Roles.Administrator">
+            <MudNavLink Href="/inventory/approvals">Approval</MudNavLink>
+        </AuthorizeView>
+    </MudNavGroup>
+
+    <AuthorizeView Roles="@InfrastructureConstants.Identity.Roles.Administrator">
+        <MudNavGroup Title="Staff" Expanded="true" Icon="@Icons.Filled.People">
+            <MudNavLink Href="/departments">Departments</MudNavLink>
+            <MudNavLink Href="/job-titles">Job Titles</MudNavLink>
+            <MudNavLink Href="/staff">Staff</MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
+
+</MudNavMenu>

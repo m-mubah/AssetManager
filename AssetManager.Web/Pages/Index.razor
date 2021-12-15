@@ -1,0 +1,12 @@
+﻿@page "/"
+@inject NavigationManager NavManager
+@attribute [Authorize]
+
+@*Can set an admin dashboard here*@
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        NavManager.NavigateTo("/inventory/assets");
+    }
+}

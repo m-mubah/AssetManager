@@ -1,0 +1,114 @@
+﻿@using AssetManager.Core.Entities.Staff
+@using AssetManager.Core.DTO.Staff
+@using AssetManager.Core.Services.Staffs
+
+@inject IStaffService staffService
+@inject IDepartmentService departmentService
+@inject IJobTitleService jobTitleService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-height: 500px; overflow-y: scroll">
+            <MudForm @ref="form">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudTextField T="string" Label="Name" Variant="Variant.Filled" @bind-Value="editStaffDTO.Staff.FullName" />
+                    </MudItem>
+
+                    <MudItem xs="6">
+                        <MudTextField T="string" Label="NID" Variant="Variant.Filled" @bind-Value="editStaffDTO.Staff.NID" />
+                    </MudItem>
+
+                    <MudItem xs="6">
+                        <MudTextField T="string" Label="Staff Number" Variant="Variant.Filled" @bind-Value="editStaffDTO.Staff.StaffNumber" />
+                    </MudItem>
+
+                    <MudItem xs="6">
+                        <MudSelect T="int" Label="Department" Variant="Variant.Filled" @bind-Value="@editStaffDTO.Staff.DepartmentId">
+                            @foreach (var type in departments)
+                            {
+                                <MudSelectItem T="int" Value="@type.Id">@type.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="6">
+                        <MudSelect T="int" Label="Job Title" Variant="Variant.Filled" @bind-Value="@editStaffDTO.Staff.JobTitleId">
+                            @foreach (var type in jobTitles)
+                            {
+                                <MudSelectItem T="int" Value="@(type.Id)">@type.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="6">
+                        <MudCheckBox @bind-Checked="@editStaffDTO.Staff.IsDepartmentHead" Label="Department Head"></MudCheckBox>
+                    </MudItem>
+                </MudGrid>
+
+                <MudGrid>
+                    <MudItem xs=12>
+                        <div>
+                            <MudCheckBox @bind-Checked="@editStaffDTO.HasLogin" Label="Create Login"></MudCheckBox>
+                        </div>
+                    </MudItem>
+
+                    @if (editStaffDTO.HasLogin)
+                    {
+                        <MudItem xs="12">
+                            <MudTextField T="string" Label="Username" Variant="Variant.Filled" @bind-Value="editStaffDTO.Username" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField T="string" Label="Password" Variant="Variant.Filled" InputType="InputType.Password" @bind-Value="editStaffDTO.Password" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField T="string" Label="Email" Variant="Variant.Filled" InputType="InputType.Email" @bind-Value="editStaffDTO.Email" />
+                        </MudItem>
+
+                        <MudItem xs="6">
+                            <MudCheckBox @bind-Checked="@editStaffDTO.HasAdminAccess" Label="Administrator"></MudCheckBox>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudForm>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@(() => Save())">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public Guid staffId { get; set; }
+
+    private AddEditStaffDTO editStaffDTO = new();
+    private List<Department> departments = new();
+    private List<JobTitle> jobTitles = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        editStaffDTO = await staffService.GetByIdAsync(staffId);
+        departments = await departmentService.GetAll();
+        jobTitles = await jobTitleService.GetJobTitlesAsync();
+    }
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    void Cancel() => MudDialog.Cancel();
+
+    MudForm form;
+
+    private async void Save()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            var staff = await staffService.UpdateAsync(editStaffDTO);
+            Snackbar.Add("Staff updated successfully!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(staff));
+        }
+    }
+}
